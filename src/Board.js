@@ -5,9 +5,9 @@ import "./Board.css";
 
 class Board extends Component {
   static defaultProps = {
-    nrows: 5,
-    ncols: 5,
-    chanceLightStartsOn: 60
+    nrows: 6,
+    ncols: 6,
+    chanceLightStartsOn: 0.4
   };
   constructor(props) {
     super(props);
@@ -16,22 +16,18 @@ class Board extends Component {
       board: this.createBoard()
     };
     this.flipCellsAround = this.flipCellsAround.bind(this);
-    this.createBoard = this.createBoard.bind(this);
   }
   createBoard() {
+    const { nrows, ncols, chanceLightStartsOn } = this.props;
     let board = [];
-    let row = [];
 
-    for (let j = 0; j < this.props.nrows; j++) {
-      for (let i = 0; i < this.props.ncols; i++) {
-        const rand = Math.floor(Math.random() * 100) + 1;
-        row.push(rand <= this.props.chanceLightStartsOn ? true : false);
+    for (let j = 0; j < nrows; j++) {
+      let row = [];
+      for (let i = 0; i < ncols; i++) {
+        row.push(Math.random() <= chanceLightStartsOn);
       }
       board.push(row);
-      row = [];
     }
-    console.log(board);
-
     return board;
   }
 
@@ -53,32 +49,35 @@ class Board extends Component {
     flipCell(y, x - 1);
 
     this.setState({ board });
-    const cells = board.flat(1).some(cell => cell === true);
-    !cells && this.setState({ hasWon: true });
+    this.checkIfWin(this.state.board);
+  }
+
+  async checkIfWin(board) {
+    const cellsLit = board.flat(1).some(cell => cell === true);
+    !cellsLit && this.setState({ hasWon: true });
   }
 
   render() {
+    const createTable = this.state.board.map((cells, idxRow) => (
+      <tr key={uuid.v4()}>
+        {cells.map((cell, idxCol) => (
+          <Cell
+            x={idxRow}
+            y={idxCol}
+            isLit={cell}
+            key={uuid.v4()}
+            flipCellsAroundMe={this.flipCellsAround}
+          />
+        ))}
+      </tr>
+    ));
     return (
       <div className="Board">
         {this.state.hasWon ? (
           <h1>You win!</h1>
         ) : (
           <table>
-            <tbody>
-              {this.state.board.map((cells, idxRow) => (
-                <tr key={uuid.v4()}>
-                  {cells.map((cell, idxCol) => (
-                    <Cell
-                      x={idxRow}
-                      y={idxCol}
-                      isLit={cell}
-                      key={uuid.v4()}
-                      flipCellsAroundMe={this.flipCellsAround}
-                    />
-                  ))}
-                </tr>
-              ))}
-            </tbody>
+            <tbody>{createTable}</tbody>
           </table>
         )}
       </div>
